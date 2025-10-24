@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #2c3e50, #3498db);
+      color: white;
+      text-align: center;
+      padding: 30px;
+    }
+    #drivers {
+      margin-top: 30px;
+    }
+    .driver {
+      background: rgba(255, 255, 255, 0.15);
+      margin: 10px auto;
+      padding: 15px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 400px;
+    }
+    button {
+      padding: 8px 16px;
+      background-color: #f39c12;
+      border: none;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #e67e22;
+    }
+    .map {
+      width: 100%;
+      height: 300px;
+      margin-top: 10px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Available Drivers Sharing Location</h1>
+  <div id="drivers">Loading available drivers...</div>
+
+  <script>
+    async function loadDrivers() {
+      try {
+        const response = await fetch('http://localhost:5000/api/drivers/with-location');
+        const data = await response.json();
+        const container = document.getElementById('drivers');
+        container.innerHTML = '';
+
+        if (!data.success || data.drivers.length === 0) {
+          container.textContent = 'No drivers currently sharing location.';
+          return;
+        }
+
+        data.drivers.forEach(driver => {
+          const card = document.createElement('div');
+          card.className = 'driver';
+          card.innerHTML = `
+            <h3>${driver.username}</h3>
+            <button onclick="showMap(${driver.latitude}, ${driver.longitude}, '${driver.username}')">Show Location</button>
+            <div id="map-${driver.username}" class="map" style="display: none;"></div>
+          `;
+          container.appendChild(card);
+        });
+      } catch (err) {
+        console.error(err);
+        document.getElementById('drivers').textContent = 'Failed to load drivers.';
+      }
+    }
+
+    function showMap(lat, lng, id) {
+      const mapDiv = document.getElementById(`map-${id}`);
+      mapDiv.style.display = 'block';
+      const map = new google.maps.Map(mapDiv, {
+        center: { lat, lng },
+        zoom: 15,
+      });
+      new google.maps.Marker({
+        position: { lat, lng },
+        map,
+      });
+    }
+
+    loadDrivers();
+    setInterval(loadDrivers, 10000); // Refresh every 10 seconds
+  </script>
+
+  <!-- Replace YOUR_GOOGLE_MAPS_API_KEY with your actual key -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAkbHwtEZJE9YMdUI5RTil1MuYzR6nl5bE"></script>
+</body>
+</html>

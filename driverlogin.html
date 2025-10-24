@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Driver Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #2c3e50, #3498db);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      color: white;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+    }
+
+    .form-container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    .btn {
+      background-color: #1abc9c;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .btn:hover {
+      background-color: #16a085;
+    }
+
+    .signup-link {
+      margin-top: 15px;
+      text-align: center;
+    }
+
+    .signup-link a {
+      color: #f1c40f;
+      text-decoration: none;
+    }
+
+    .signup-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>Driver Login</h1>
+  <div class="form-container">
+    <input type="text" id="driverUsername" placeholder="Username" />
+    <input type="password" id="driverPassword" placeholder="Password" />
+    <button class="btn" onclick="driverLogin()">Login</button>
+    <div class="signup-link">
+      <p>Don't have an account? <a href="driversignup.html">Sign up here</a></p>
+    </div>
+  </div>
+
+  <script>
+    function driverLogin() {
+      const username = document.getElementById('driverUsername').value;
+      const password = document.getElementById('driverPassword').value;
+
+      fetch('http://localhost:5000/api/driver/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          localStorage.setItem('driverUsername', username); // Save username to localStorage
+          window.location.href = 'driverlocation.html'; // Redirect to location sharing page
+        } else {
+          alert('Invalid credentials');
+        }
+      })
+      .catch(err => {
+        console.error('Login error:', err);
+        alert('An error occurred during login');
+      });
+    }
+  </script>
+</body>
+</html>

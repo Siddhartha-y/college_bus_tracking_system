@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Driver Location Sharing</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #2c3e50, #3498db);
+      color: white;
+      text-align: center;
+      padding: 50px;
+      position: relative;
+      min-height: 100vh;
+    }
+
+    .buttons {
+      margin: 20px 0;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 18px;
+      margin: 10px;
+      background-color: #1abc9c;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #16a085;
+    }
+
+    #status {
+      margin-top: 20px;
+      font-size: 20px;
+    }
+
+    .footer {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+    }
+
+    .footer button {
+      background-color: #f39c12;
+    }
+
+    .footer button:hover {
+      background-color: #e67e22;
+    }
+  </style>
+</head>
+<body>
+  <h1>Driver Location Sharing</h1>
+
+  <div class="buttons">
+    <button onclick="startSharing()">Start Sharing Location</button>
+    <button onclick="stopSharing()">Stop Sharing</button>
+  </div>
+
+  <div id="status">Location not shared yet.</div>
+
+  <div class="footer">
+    <button onclick="goHome()">Back to Homepage</button>
+  </div>
+
+  <script>
+    let watchId = null;
+    let username = localStorage.getItem('driverUsername'); // Set this during login
+
+    function startSharing() {
+      if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser');
+        return;
+      }
+
+      if (!username) {
+        alert('Username not found. Please login again.');
+        return;
+      }
+
+      document.getElementById('status').textContent = 'Requesting location permission...';
+
+      watchId = navigator.geolocation.watchPosition(
+        position => {
+          const { latitude, longitude } = position.coords;
+          document.getElementById('status').textContent =
+            `Sharing location: Lat ${latitude.toFixed(5)}, Lon ${longitude.toFixed(5)}`;
+
+          fetch('http://localhost:5000/api/driver/location', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, latitude, longitude }),
+          });
+        },
+        error => {
+          document.getElementById('status').textContent = `Error: ${error.message}`;
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 10000,
+          timeout: 5000,
+        }
+      );
+    }
+
+    function stopSharing() {
+      if (!username) {
+        alert('Username not found. Please login again.');
+        return;
+      }
+
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+      }
+
+      fetch('http://localhost:5000/api/driver/stop-sharing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username }),
+      }).then(() => {
+        document.getElementById('status').textContent = 'Location sharing stopped.';
+      }).catch(() => {
+        document.getElementById('status').textContent = 'Error stopping sharing.';
+      });
+    }
+
+    function goHome() {
+      window.location.href = 'index.html'; // Adjust path if needed
+    }
+
+    window.addEventListener('beforeunload', () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    });
+
+    // Save username if redirected from login
+    if (!username) {
+      const params = new URLSearchParams(window.location.search);
+      const user = params.get('user');
+      if (user) {
+        username = user;
+        localStorage.setItem('driverUsername', username);
+      }
+    }
+  </script>
+</body>
+</html>
